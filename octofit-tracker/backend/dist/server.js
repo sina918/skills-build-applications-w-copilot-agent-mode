@@ -4,14 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const database_1 = require("./database");
 const models_1 = require("./models");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 8000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/octofit_db';
 const codespaceName = process.env.CODESPACE_NAME;
 const apiBaseUrl = codespaceName
     ? `https://${codespaceName}-8000.app.github.dev`
@@ -81,16 +80,18 @@ app.post('/api/workouts/', async (req, res) => {
         res.status(400).json({ message: 'Unable to create workout', error });
     }
 });
-mongoose_1.default
-    .connect(MONGO_URI)
-    .then(() => {
-    console.log('MongoDB connected');
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-        console.log(`API base URL: ${apiBaseUrl}`);
-    });
-})
-    .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-});
+const startServer = async () => {
+    try {
+        await (0, database_1.connectToDatabase)();
+        console.log('MongoDB connected');
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            console.log(`API base URL: ${apiBaseUrl}`);
+        });
+    }
+    catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
+startServer();
